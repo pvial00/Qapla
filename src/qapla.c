@@ -7,6 +7,10 @@ uint64_t Q[2] = {
 0x3fcb3d9deac52511, 0x18a89dd6bb3c4d04
 };
 
+uint64_t rotateleft64(uint64_t a, uint64_t b) {
+    return ((a << b) | (a >> (64 - b)));
+}
+
 struct qapla_state {
      uint64_t r[8];
      uint64_t o[4];
