@@ -19,7 +19,6 @@ struct qapla_state {
 
 void qapla_F(struct qapla_state *state) {
     int i;
-    uint64_t temp;
     uint64_t y[8];
     for (i = 0; i < 8; i++) {
         y[i] = state->r[i];
@@ -52,10 +51,7 @@ void qapla_F(struct qapla_state *state) {
 
 void qapla_keysetup(struct qapla_state *state, unsigned char *key, unsigned char *nonce) {
     memset(state->r, 0, 8*(sizeof(uint64_t)));
-    uint64_t n[4];
     int i;
-    int m = 0;
-    int inc = 8;
     state->rounds = 12;
     state->r[0] = Q[0];
     state->r[4] = Q[1];
