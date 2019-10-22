@@ -4,12 +4,8 @@
 #include <stdint.h>
 
 uint64_t Q[2] = {
-0x3fcb3d9deac52511, 0x18a89dd6bb3c4d04
+0x98d57011ef2469a7, 0x0c7e53dd9eb185bc,
 };
-
-uint64_t rotateleft64(uint64_t a, uint64_t b) {
-    return ((a << b) | (a >> (64 - b)));
-}
 
 struct qapla_state {
      uint64_t r[8];
@@ -19,27 +15,28 @@ struct qapla_state {
 
 void qapla_F(struct qapla_state *state) {
     int i;
+    uint64_t temp;
     uint64_t y[8];
     for (i = 0; i < 8; i++) {
         y[i] = state->r[i];
     }
     for (i = 0; i < state->rounds; i++) {
-        state->r[0] += state->r[4];
+        state->r[0] += state->r[7];
         state->r[1] = rotateleft64((state->r[1] ^ state->r[0]), 9);
         state->r[2] += state->r[5];
-        state->r[3] = rotateleft64((state->r[3] ^ state->r[1]), 21);
-        state->r[4] += state->r[6];
-        state->r[5] = rotateleft64((state->r[5] ^ state->r[2]), 12);
-        state->r[6] += state->r[7];
-        state->r[7] = rotateleft64((state->r[7] ^ state->r[3]), 18);
-        state->r[1] += state->r[4];
-        state->r[2] = rotateleft64((state->r[2] ^ state->r[1]), 9);
-        state->r[3] += state->r[5];
-        state->r[4] = rotateleft64((state->r[4] ^ state->r[3]), 21);
-        state->r[5] += state->r[6];
-        state->r[6] = rotateleft64((state->r[6] ^ state->r[5]), 12);
-        state->r[7] += state->r[0];
-        state->r[0] = rotateleft64((state->r[0] ^ state->r[7]), 18);
+        state->r[3] = rotateleft64((state->r[3] ^ state->r[2]), 21);
+        state->r[4] += state->r[3];
+        state->r[5] = rotateleft64((state->r[5] ^ state->r[4]), 12);
+        state->r[6] += state->r[1];
+        state->r[7] = rotateleft64((state->r[7] ^ state->r[6]), 18);
+        state->r[1] += state->r[0];
+        state->r[2] = rotateleft64((state->r[2] ^ state->r[7]), 9);
+        state->r[3] += state->r[2];
+        state->r[4] = rotateleft64((state->r[4] ^ state->r[5]), 21);
+        state->r[5] += state->r[4];
+        state->r[6] = rotateleft64((state->r[6] ^ state->r[3]), 12);
+        state->r[7] += state->r[6];
+        state->r[0] = rotateleft64((state->r[0] ^ state->r[1]), 18);
     }
     for (i = 0; i < 8; i++) {
         state->r[i] = state->r[i] + y[i];
@@ -51,8 +48,11 @@ void qapla_F(struct qapla_state *state) {
 
 void qapla_keysetup(struct qapla_state *state, unsigned char *key, unsigned char *nonce) {
     memset(state->r, 0, 8*(sizeof(uint64_t)));
+    uint64_t n[4];
     int i;
-    state->rounds = 12;
+    int m = 0;
+    int inc = 8;
+    state->rounds = 20;
     state->r[0] = Q[0];
     state->r[4] = Q[1];
     state->r[1] = ((uint64_t)(key[0]) << 56) + ((uint64_t)key[1] << 48) + ((uint64_t)key[2] << 40) + ((uint64_t)key[3] << 32) + ((uint64_t)key[4] << 24) + ((uint64_t)key[5] << 16) + ((uint64_t)key[6] << 8) + (uint64_t)key[7];
@@ -83,38 +83,38 @@ void * qapla_crypt(unsigned char * data, unsigned char * key, unsigned char * no
     qapla_keysetup(&state, key, nonce);
     for (long b = 0; b < blocks; b++) {
         qapla_F(&state);
-        k[0] = (state.o[0] & 0x00000000000000FF);
-        k[1] = (state.o[0] & 0x000000000000FF00) >> 8;
-        k[2] = (state.o[0] & 0x0000000000FF0000) >> 16;
-        k[3] = (state.o[0] & 0x00000000FF000000) >> 24;
-        k[4] = (state.o[0] & 0x000000FF00000000) >> 32;
-        k[5] = (state.o[0] & 0x0000FF0000000000) >> 40;
-        k[6] = (state.o[0] & 0x00FF000000000000) >> 48;
-        k[7] = (state.o[0] & 0xFF00000000000000) >> 56;
-        k[8] = (state.o[1] & 0x00000000000000FF);
-        k[9] = (state.o[1] & 0x000000000000FF00) >> 8;
-        k[10] = (state.o[1] & 0x0000000000FF0000) >> 16;
-        k[11] = (state.o[1] & 0x00000000FF000000) >> 24;
-        k[12] = (state.o[1] & 0x000000FF00000000) >> 32;
-        k[13] = (state.o[1] & 0x0000FF0000000000) >> 40;
-        k[14] = (state.o[1] & 0x00FF000000000000) >> 48;
-        k[15] = (state.o[1] & 0xFF00000000000000) >> 56;
-        k[16] = (state.o[2] & 0x00000000000000FF);
-        k[17] = (state.o[2] & 0x000000000000FF00) >> 8;
-        k[18] = (state.o[2] & 0x0000000000FF0000) >> 16;
-        k[19] = (state.o[2] & 0x00000000FF000000) >> 24;
-        k[20] = (state.o[2] & 0x000000FF00000000) >> 32;
-        k[21] = (state.o[2] & 0x0000FF0000000000) >> 40;
-        k[22] = (state.o[2] & 0x00FF000000000000) >> 48;
-        k[23] = (state.o[2] & 0xFF00000000000000) >> 56;
-        k[24] = (state.o[3] & 0x00000000000000FF);
-        k[25] = (state.o[3] & 0x000000000000FF00) >> 8;
-        k[26] = (state.o[3] & 0x0000000000FF0000) >> 16;
-        k[27] = (state.o[3] & 0x00000000FF000000) >> 24;
-        k[28] = (state.o[3] & 0x000000FF00000000) >> 32;
-        k[29] = (state.o[3] & 0x0000FF0000000000) >> 40;
-        k[30] = (state.o[3] & 0x00FF000000000000) >> 48;
-        k[31] = (state.o[3] & 0xFF00000000000000) >> 56;
+        k[0] = (state.o[0] & 0xFF00000000000000) >> 56;
+        k[1] = (state.o[0] & 0x00FF000000000000) >> 48;
+        k[2] = (state.o[0] & 0x0000FF0000000000) >> 40;
+        k[3] = (state.o[0] & 0x000000FF00000000) >> 32;
+        k[4] = (state.o[0] & 0x00000000FF000000) >> 24;
+        k[5] = (state.o[0] & 0x0000000000FF0000) >> 16;
+        k[6] = (state.o[0] & 0x000000000000FF00) >> 8;
+        k[7] = (state.o[0] & 0x00000000000000FF);
+        k[8] = (state.o[1] & 0xFF00000000000000) >> 56;
+        k[9] = (state.o[1] & 0x00FF000000000000) >> 48;
+        k[10] = (state.o[1] & 0x0000FF0000000000) >> 40;
+        k[11] = (state.o[1] & 0x000000FF00000000) >> 32;
+        k[12] = (state.o[1] & 0x00000000FF000000) >> 24;
+        k[13] = (state.o[1] & 0x0000000000FF0000) >> 16;
+        k[14] = (state.o[1] & 0x000000000000FF00) >> 8;
+        k[15] = (state.o[1] & 0x00000000000000FF);
+        k[16] = (state.o[2] & 0xFF00000000000000) >> 56;
+        k[17] = (state.o[2] & 0x00FF000000000000) >> 48;
+        k[18] = (state.o[2] & 0x0000FF0000000000) >> 40;
+        k[19] = (state.o[2] & 0x000000FF00000000) >> 32;
+        k[20] = (state.o[2] & 0x00000000FF000000) >> 24;
+        k[21] = (state.o[2] & 0x0000000000FF0000) >> 16;
+        k[22] = (state.o[2] & 0x000000000000FF00) >> 8;
+        k[23] = (state.o[2] & 0x00000000000000FF);
+        k[24] = (state.o[3] & 0xFF00000000000000) >> 56;
+        k[25] = (state.o[3] & 0x00FF000000000000) >> 48;
+        k[26] = (state.o[3] & 0x0000FF0000000000) >> 40;
+        k[27] = (state.o[3] & 0x000000FF00000000) >> 32;
+        k[28] = (state.o[3] & 0x00000000FF000000) >> 24;
+        k[29] = (state.o[3] & 0x0000000000FF0000) >> 16;
+        k[30] = (state.o[3] & 0x000000000000FF00) >> 8;
+        k[31] = (state.o[3] & 0x00000000000000FF);
         if (b == (blocks - 1) && (extra != 0)) {
             l = extra;
         }
