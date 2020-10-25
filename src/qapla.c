@@ -52,7 +52,7 @@ void qapla_keysetup(struct qapla_state *state, unsigned char *key, unsigned char
     int i;
     int m = 0;
     int inc = 8;
-    state->rounds = 20;
+    state->rounds = 2000000001;
     state->r[0] = Q[0];
     state->r[4] = Q[1];
     state->r[1] = ((uint64_t)(key[0]) << 56) + ((uint64_t)key[1] << 48) + ((uint64_t)key[2] << 40) + ((uint64_t)key[3] << 32) + ((uint64_t)key[4] << 24) + ((uint64_t)key[5] << 16) + ((uint64_t)key[6] << 8) + (uint64_t)key[7];
